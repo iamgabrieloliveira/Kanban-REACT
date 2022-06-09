@@ -2,7 +2,7 @@ import styled from 'styled-components'
 
 import { useState } from 'react';
 
-import { UilEdit, UilTrashAlt, UilCheckCircle, UilAngleDoubleRight  } from '@iconscout/react-unicons'
+import { UilEdit, UilTrashAlt, UilCheckCircle, UilAngleDoubleRight, UilAngleDoubleLeft } from '@iconscout/react-unicons'
 
 const TaskContainer = styled.div`
   height: 140px;
@@ -42,23 +42,29 @@ const UtilitysButtons = styled.div`
   }
 `
 const UtilityButtonStyle = {
-    color: "white",
-    cursor: "pointer",
-    width: 22,
-    height: 22,
+  color: "white",
+  cursor: "pointer",
+  width: 22,
+  height: 22,
 }
 const RigthStageStyle = {
-    color: "white",
-    cursor: "pointer",
-    width: 30,
-    height: 30,
-    position: "absolute",
-    marginLeft: 257,
-    marginTop: 81,
+  color: "white",
+  cursor: "pointer",
+  width: 30,
+  height: 30,
+  position: "absolute",
+  marginLeft: 257,
+  marginTop: 81,
 }
-const ButtonReset = {
-  background: "none",
-  border: "none",
+
+const LeftStageStyle = {
+  color: "white",
+  cursor: "pointer",
+  width: 30,
+  height: 30,
+  position: "absolute",
+  marginTop: 81,
+  marginLeft: -13,
 }
 
 const TitleInput = styled.input`
@@ -77,7 +83,6 @@ const TitleInput = styled.input`
     color: white;
   }
 `
-
 const DescriptionInput = styled.input`
   color:rgba(255, 255, 255, 0.75);
   font-size: 16px;
@@ -92,90 +97,115 @@ const DescriptionInput = styled.input`
   }
 
   &::placeholder{
-    color: white;
+    color: rgba(255, 255, 255, 0.75);
   }
 `
-
 export function Task(props) {
 
-  const [CurrentIcon, setCurrentIcon] = useState(true);
-  const [EditedTask, setEditedTask] = useState(true);
 
-  const [TitleEditInput, setTitlEditInput] = useState(props.tasktitle);
-  const [DescriptionEditInput, setDescriptionInput] = useState(props.taskDescription);
+  const [TaskEditingState, setTaskEditingState] = useState(false);
 
+  const [TitleEditInput, setTitleEditInput] = useState(props.TaskTitle);
+  const [DescriptionEditInput, setDescriptionEditInput] = useState(props.TaskDescription);
 
-  function DeleteTask(tasks, taskid) {
-    tasks.splice(taskid, 1)
-    props.settasklist([...tasks])
-  }
-
-  function EditTask(tasks, taskid) {
-    if(EditedTask){
-      setEditedTask(false)
-      setCurrentIcon(false)
-    }else{
-      setEditedTask(true)
-      setCurrentIcon(true)
-
-
-      tasks[taskid].title = TitleEditInput
-      tasks[taskid].description = DescriptionEditInput
-
-      props.settasklist([...tasks])
+  //Edita a TASK
+  function EditTask() {
+    if (TaskEditingState) {
+      setTaskEditingState(false)
+      props.ColumnList[props.ColumnId].quotes[props.id].title = TitleEditInput
+      props.ColumnList[props.ColumnId].quotes[props.id].description = DescriptionEditInput
+      props.setColumnList([...props.ColumnList])
+    }
+    else {
+      setTaskEditingState(true)
     }
   }
 
-  function ChangeTaskStage(taskid) {
-    const NewTaskStage = {
-      taskid: taskid
-    }
+  //Delete a TASK 
+  function DeleteTask() {
+    props.ColumnList[props.ColumnId].quotes.splice(props.id, 1)
 
-    props.setTaskStage(prevState => [prevState, NewTaskStage])
-    console.log(props.TaskStage)
+    props.setColumnList([...props.ColumnList])
   }
 
-  
-  return( 
-    <TaskContainer style={{background: props.taskcolor}} >
-      {EditedTask ? 
-      <TaskTitle>
-        {props.tasktitle}
-        </TaskTitle> : 
-      <TitleInput 
-      autoFocus
-      type="text"
-      placeholder={props.tasktitle}
-      onChange={(e) => setTitlEditInput(e.target.value)}
-       />}
-      {EditedTask ? <TaskDescription> 
-        {props.taskdescription}
-      </TaskDescription> :
-       <DescriptionInput
-       placeholder={props.taskDescription}
-       onChange={(e) => setDescriptionInput(e.target.value)}     
-       />}
+  //Trocar Stage 
+  function MoveTaskToRight() {
+
+    if (props.ColumnId == props.ColumnList.length - 1) {
+      let changed = props.ColumnList[props.ColumnId].quotes.splice(props.id, 1);
+      props.ColumnList[0].quotes.push(changed[0])
+      props.setColumnList([...props.ColumnList])
+    } else {
+
+      let Changed = props.ColumnList[props.ColumnId].quotes.splice(props.id, 1);
+      props.ColumnList[props.ColumnId + 1].quotes.push(Changed[0])
+
+      props.setColumnList([...props.ColumnList])
+    }
+  }
+  function MoveTaskToLeft() {
+
+    if (props.ColumnId == 0) {
+      let changed = props.ColumnList[props.ColumnId].quotes.splice(props.id, 1);
+      props.ColumnList[props.ColumnList.length - 1].quotes.push(changed[0])
+      props.setColumnList([...props.ColumnList])
+    } else {
+
+      let Changed = props.ColumnList[props.ColumnId].quotes.splice(props.id, 1);
+      props.ColumnList[props.ColumnId - 1].quotes.push(Changed[0])
+
+      props.setColumnList([...props.ColumnList])
+    }
+  }
+
+  return (
+    <TaskContainer
+      style={{ background: props.TaskColor }}
+      draggable="true">
+      {TaskEditingState ?
+        <>
+          <TitleInput
+            onChange={(e) => setTitleEditInput(e.target.value)}
+            placeholder={props.TaskTitle} />
+          <DescriptionInput
+            onChange={(e) => setDescriptionEditInput(e.target.value)}
+            placeholder={props.TaskDescription}
+          />
+        </>
+        :
+        <>
+          <TaskTitle>
+            {props.TaskTitle}
+          </TaskTitle>
+          <TaskDescription>
+            {props.TaskDescription}
+          </TaskDescription>
+        </>
+      }
       <UtilitysButtons>
-       {CurrentIcon ? <UilEdit
-        onClick={EditTask}
-        style={UtilityButtonStyle}/> :
-         <UilCheckCircle
-         onClick={() => EditTask(props.taskList, props.id)}
-         style={UtilityButtonStyle}
-         />}
-        <button 
-        style={ButtonReset}
-        >
-        <UilTrashAlt 
-        onClick={() => DeleteTask(props.taskList, props.id)}
-        style={UtilityButtonStyle}
+        {TaskEditingState ?
+          <UilCheckCircle
+            onClick={EditTask}
+            style={UtilityButtonStyle}
+          />
+          :
+          <UilEdit
+            onClick={EditTask}
+            style={UtilityButtonStyle}
+          />}
+        <UilTrashAlt
+          style={UtilityButtonStyle}
+          onClick={DeleteTask}
         />
-        </button>
       </UtilitysButtons>
       <UilAngleDoubleRight
+        onClick={MoveTaskToRight}
         style={RigthStageStyle}
-        onClick={() => ChangeTaskStage(props.id)}
-        />
+      />
+      <UilAngleDoubleLeft
+        style={LeftStageStyle}
+        onClick={MoveTaskToLeft}
+      />
     </TaskContainer>
   )
 }
